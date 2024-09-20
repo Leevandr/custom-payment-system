@@ -56,12 +56,14 @@ public class FileParser {
 
     public boolean isValidFileName(Path filePath) {
         String fileName = filePath.getFileName().toString();
-        String regex = "^BCP_\\d{8}_\\d{6}_\\w+\\.txt$";
+        String regex = "^BCP_\\d{8}_\\d{6}_\\d{4}";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(fileName);
         boolean isValid = matcher.matches();
         if (!isValid) {
             log.warn("Invalid file name: {}", fileName);
+        } else {
+            log.warn("Valid file name: {}", fileName);
         }
         return isValid;
     }
