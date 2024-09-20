@@ -1,5 +1,6 @@
 package com.levandr.custompaymentsystem.entity;
 
+
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -10,32 +11,44 @@ import java.util.Objects;
 
 @Getter
 @Setter
-@ToString
-@RequiredArgsConstructor
-@AllArgsConstructor
 @Entity
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Table(name = "ref_payment")
 public class PaymentEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
-    Long id;
+    @Column(nullable = false)
+    private Long id;
 
-    String recordNumber;
+    @Column(name = "payment_id")
     String paymentId;
+
+    @Column(name = "record_number")
+    String recordNumber;
+
+    @Column(name = "company_name")
     String companyName;
-    String payerINN;
+
+    @Column(name = "payer_inn")
+    String payerInn;
+
+    @Column(name = "amount")
     BigDecimal amount;
 
+    @Column(name = "status_code")
     Integer status;
 
-    public PaymentEntity(String recordNumber, String paymentId, String companyName, String payerINN, BigDecimal amount) {
+    public PaymentEntity(String recordNumber, String paymentId, String companyName, String payerInn, BigDecimal amount) {
         this.recordNumber = recordNumber;
         this.paymentId = paymentId;
         this.companyName = companyName;
-        this.payerINN = payerINN;
+        this.payerInn = payerInn;
         this.amount = amount;
+    }
+
+    public PaymentEntity() {
+
     }
 
     @Override

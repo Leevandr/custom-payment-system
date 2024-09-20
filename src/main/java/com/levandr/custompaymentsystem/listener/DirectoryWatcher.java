@@ -1,12 +1,14 @@
 package com.levandr.custompaymentsystem.listener;
 
 import com.levandr.custompaymentsystem.service.parser.FileParser;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -14,12 +16,11 @@ public class DirectoryWatcher {
 
     private final Path inputDirectory = Paths.get("src/main/resources/Input");
     private final FileParser fileParser;
+    private final Set<Path> processedFiles = new HashSet<>();
 
-    @PostConstruct
+
     public void init() {
-        Thread watcherThread = new Thread(this::watchDirectory);
-        watcherThread.setDaemon(true);
-        watcherThread.start();
+        watchDirectory();
     }
 
     public void watchDirectory() {
@@ -33,9 +34,15 @@ public class DirectoryWatcher {
 
                     if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
                         Path filePath = inputDirectory.resolve((Path) event.context());
-                        System.out.println("File created: " + filePath);
+                        synchronized (processedFiles) {
+                            if (!processedFiles.contains(filePath)) {
+                                System.out.println("File created: " + filePath);
 
-                        fileParser.parseFile(filePath);
+                                fileParser.parseFile(filePath);
+                                processedFiles.add(filePath);
+                            }
+                        }
+
                     }
                 }
                 key.reset();

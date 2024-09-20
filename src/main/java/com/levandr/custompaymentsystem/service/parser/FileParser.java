@@ -14,7 +14,10 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -22,20 +25,23 @@ public class FileParser {
 
     private static final Logger log = LoggerFactory.getLogger(FileParser.class);
     private final PaymentEntityRepository paymentEntityRepository;
+    private static final Path INPUT_DIRECTORY = Paths.get("src/main/resources/Input");
 
 
     @Transactional
     public void parseFile(Path filePath) throws IOException {
-        try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                PaymentEntity payment = parseLine(line);
-                if (isValidLine(line, filePath)) {
-                    Optional<PaymentEntity> existingPayment = paymentEntityRepository.findByPaymentId(payment.getPaymentId());
-                    if (existingPayment.isEmpty()) {
-                        paymentEntityRepository.save(payment);
-                    } else {
-                        log.debug("Payment with ID {} already exists, skipping...", payment.getPaymentId());
+        if (filePath.startsWith(INPUT_DIRECTORY) && isValidFileName(filePath)) {
+            try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    PaymentEntity payment = parseLine(line);
+                    if (payment != null && isValidLine(line, filePath)) {
+                        Optional<PaymentEntity> existingPayment = paymentEntityRepository.findByPaymentId(payment.getPaymentId());
+                        if (existingPayment.isEmpty()) {
+                            paymentEntityRepository.save(payment);
+                        } else {
+                            log.debug("Payment with ID {} already exists, skipping...", payment.getPaymentId());
+                        }
                     }
                 }
             }
@@ -47,6 +53,19 @@ public class FileParser {
         log.debug("In {} line\n{} isValid={}", filePath, line, lineBool);
         return lineBool;
     }
+
+    public boolean isValidFileName(Path filePath) {
+        String fileName = filePath.getFileName().toString();
+        String regex = "^BCP_\\d{8}_\\d{6}_\\w+\\.txt$";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(fileName);
+        boolean isValid = matcher.matches();
+        if (!isValid) {
+            log.warn("Invalid file name: {}", fileName);
+        }
+        return isValid;
+    }
+
 
     private PaymentEntity parseLine(String line) {
         PaymentEntity payment = new PaymentEntity();
@@ -63,6 +82,8 @@ public class FileParser {
             payment.setStatus(1);
 
             log.debug("Payment{}", payment);
+
+            System.out.println("Payment approved " + payment);
 
             System.out.println("Parsing success");
 
