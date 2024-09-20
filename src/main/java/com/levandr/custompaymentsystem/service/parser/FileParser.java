@@ -1,10 +1,11 @@
 package com.levandr.custompaymentsystem.service.parser;
 
 import com.levandr.custompaymentsystem.entity.PaymentEntity;
-import com.levandr.custompaymentsystem.entity.PaymentEntityRepository;
+import com.levandr.custompaymentsystem.repository.PaymentEntityRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,7 +15,6 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,22 +25,30 @@ public class FileParser {
 
     private static final Logger log = LoggerFactory.getLogger(FileParser.class);
     private final PaymentEntityRepository paymentEntityRepository;
-    private static final Path INPUT_DIRECTORY = Paths.get("src/main/resources/Input");
+
+    @Value("${spring.input.directory}")
+    private Path INPUT_DIRECTORY;
 
 
     @Transactional
     public void parseFile(Path filePath) throws IOException {
+        log.info("parseFile start... {}", filePath);
         if (filePath.startsWith(INPUT_DIRECTORY) && isValidFileName(filePath)) {
             try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
                 String line;
                 while ((line = reader.readLine()) != null) {
+
+                    log.info("parseFile line... {}", line);
+
                     PaymentEntity payment = parseLine(line);
-                    if (payment != null && isValidLine(line, filePath)) {
+
+                    if (payment != null && isValidLine(line)) {
+
                         Optional<PaymentEntity> existingPayment = paymentEntityRepository.findByPaymentId(payment.getPaymentId());
                         if (existingPayment.isEmpty()) {
                             paymentEntityRepository.save(payment);
                         } else {
-                            log.debug("Payment with ID {} already exists, skipping...", payment.getPaymentId());
+                            log.info("Payment with ID {} already exists, skipping...", payment.toString());
                         }
                     }
                 }
@@ -48,9 +56,9 @@ public class FileParser {
         }
     }
 
-    public boolean isValidLine(String line, Path filePath) {
+    public boolean isValidLine(String line) {
         boolean lineBool = line.length() == 143;
-        log.debug("In {} line\n{} isValid={}", filePath, line, lineBool);
+        log.info("line {} isValid={}", line, lineBool);
         return lineBool;
     }
 
@@ -61,9 +69,9 @@ public class FileParser {
         Matcher matcher = pattern.matcher(fileName);
         boolean isValid = matcher.matches();
         if (!isValid) {
-            log.warn("Invalid file name: {}", fileName);
+            log.warn("File name: {} is Invalid", fileName);
         } else {
-            log.warn("Valid file name: {}", fileName);
+            log.warn("File name: {} is Valid!", fileName);
         }
         return isValid;
     }
@@ -71,10 +79,13 @@ public class FileParser {
 
     private PaymentEntity parseLine(String line) {
         PaymentEntity payment = new PaymentEntity();
+        log.info("Payment: {}", payment.toString());
         if (line.length() < 144) {
-            System.out.println("Line is too short: " + line.length());
+            log.error("Line is too short: {} ", line.length());
             return null;
         } else {
+            log.info("Payment approved: {}", payment.toString());
+
             String recordNumber = line.substring(0, 12).trim();
             String paymentId = line.substring(13, 63).trim();
             String companyName = line.substring(64, 129).trim();
@@ -82,15 +93,12 @@ public class FileParser {
             BigDecimal amount = new BigDecimal(line.substring(143).trim());
 
             payment.setStatus(1);
-
-            log.debug("Payment{}", payment);
-
-            System.out.println("Payment approved " + payment);
-
-            System.out.println("Parsing success");
+            log.info("Parsing success, payment is: {}", payment.toString());
+            log.info("<------------------>");
+            log.info("---levandr-parser---");
+            log.info("<------------------>");
 
             return new PaymentEntity(recordNumber, paymentId, companyName, payerInn, amount);
-
         }
     }
 }

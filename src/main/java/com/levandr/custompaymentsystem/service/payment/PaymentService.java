@@ -1,7 +1,7 @@
 package com.levandr.custompaymentsystem.service.payment;
 
 import com.levandr.custompaymentsystem.entity.PaymentEntity;
-import com.levandr.custompaymentsystem.entity.PaymentEntityRepository;
+import com.levandr.custompaymentsystem.repository.PaymentEntityRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

@@ -1,6 +1,9 @@
+
 spring:
   application:
     name: custom-payment-system
+  input:
+    directory: /Users/levandr/IdeaProjects/custom-payment-system/src/main/resources/Input
   datasource:
     url: jdbc:h2:mem:testdb
     driver-class-name: org.h2.Driver

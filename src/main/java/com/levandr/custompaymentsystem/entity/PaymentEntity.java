@@ -69,4 +69,17 @@ public class PaymentEntity {
         return this instanceof HibernateProxy ?
                 ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
     }
+
+    @Override
+    public String toString() {
+        return "PaymentEntity{" +
+               "id=" + id +
+               ", paymentId='" + paymentId + '\'' +
+               ", recordNumber='" + recordNumber + '\'' +
+               ", companyName='" + companyName + '\'' +
+               ", payerInn='" + payerInn + '\'' +
+               ", amount=" + amount +
+               ", status=" + status +
+               '}';
+    }
 }
