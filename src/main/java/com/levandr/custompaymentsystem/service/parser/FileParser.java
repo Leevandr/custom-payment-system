@@ -51,18 +51,23 @@ public class FileParser {
     private PaymentEntity parseLine(String line) {
         PaymentEntity payment = new PaymentEntity();
         if (line.length() < 144) {
-            throw new IllegalArgumentException("Line is too short: " + line);
+            System.out.println("Line is too short: " + line.length());
+            return null;
+        } else {
+            String recordNumber = line.substring(0, 12).trim();
+            String paymentId = line.substring(13, 63).trim();
+            String companyName = line.substring(64, 129).trim();
+            String payerInn = line.substring(130, 142).trim();
+            BigDecimal amount = new BigDecimal(line.substring(143).trim());
+
+            payment.setStatus(1);
+
+            log.debug("Payment{}", payment);
+
+            System.out.println("Parsing success");
+
+            return new PaymentEntity(recordNumber, paymentId, companyName, payerInn, amount);
+
         }
-        String recordNumber = line.substring(0, 12).trim();
-        String paymentId = line.substring(13, 63).trim();
-        String companyName = line.substring(64, 129).trim();
-        String payerInn = line.substring(130, 142).trim();
-        BigDecimal amount = new BigDecimal(line.substring(143).trim());
-
-        payment.setStatus(1);
-
-        log.debug("Payment{}", payment);
-
-        return new PaymentEntity(recordNumber, paymentId, companyName, payerInn, amount);
     }
 }
