@@ -31,6 +31,7 @@ public class DirectoryWatcher {
     }
 
 
+    //Для того что бы парсить файлы уже лежащие в директории до запуска
     private void processExistingFiles() {
         log.info("Start processExistingFiles...");
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(INPUT_DIRECTORY)) {
@@ -46,10 +47,11 @@ public class DirectoryWatcher {
                 }
             }
         } catch (IOException e) {
-            log.error("IO exception in processExcFile", e);
+            log.error("IO exception in processExcFile ", e);
         }
     }
 
+    //Для того что бы парсить файлы уже лежащие в директории после запуска и ждать появления
     @Async
     public void watchDirectory() {
         log.info("Start watch directory...");
@@ -83,7 +85,7 @@ public class DirectoryWatcher {
                 key.reset();
             }
         } catch (IOException exception) {
-            log.error("Error watching directory", exception);
+            log.error("Error watching directory ", exception);
         }
     }
 }
