@@ -8,6 +8,8 @@ class CustomPaymentSystemApplicationTests {
 
     @Test
     void contextLoads() {
+        PaymentServiceIntegrationTest paymentServiceIntegrationTest = new PaymentServiceIntegrationTest();
+        paymentServiceIntegrationTest.testCreateAndFindPayment();
     }
 
 }

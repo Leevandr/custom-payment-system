@@ -26,12 +26,16 @@ repositories {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
-    compileOnly("org.projectlombok:lombok")
+
     developmentOnly("org.springframework.boot:spring-boot-devtools")
-    runtimeOnly("com.h2database:h2")
+
+    compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
+
+    runtimeOnly("com.h2database:h2")
     runtimeOnly("org.postgresql:postgresql")
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

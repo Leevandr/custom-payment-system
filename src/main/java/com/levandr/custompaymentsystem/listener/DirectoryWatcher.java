@@ -1,6 +1,7 @@
 package com.levandr.custompaymentsystem.listener;
 
 import com.levandr.custompaymentsystem.service.parser.FileParser;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,7 @@ public class DirectoryWatcher {
     private final Set<Path> processedFiles = new HashSet<>();
 
 
+    @PostConstruct
     public void init() {
         log.info("Input directory: {} ", INPUT_DIRECTORY);
         processExistingFiles();
@@ -31,8 +33,10 @@ public class DirectoryWatcher {
     }
 
 
+
     //Для того что бы парсить файлы уже лежащие в директории до запуска
-    private void processExistingFiles() {
+    @Async
+    public void processExistingFiles() {
         log.info("Start processExistingFiles...");
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(INPUT_DIRECTORY)) {
             for (Path entry : stream) {

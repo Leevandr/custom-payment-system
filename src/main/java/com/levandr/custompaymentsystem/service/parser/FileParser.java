@@ -43,13 +43,14 @@ public class FileParser {
                     log.info("ParseFile line... {}", line);
                     var payment = parseLine(line, filePath);
                     if (payment != null) {
-                        Optional<PaymentEntity> existingPayment = paymentEntityRepository.findByPaymentId(payment.getPaymentId());
+                        Optional<PaymentEntity> existingPayment = paymentService.findPaymentByPaymentId(payment.getPaymentId());
                         if (existingPayment.isEmpty()) {
-                            paymentEntityRepository.save(payment);
+                            payment.setStatus(PaymentStatus.OK.getCode());
+                            paymentService.savePayment(payment);
                         } else {
                             log.info("Payment with ID {} already exists, skipping...", payment);
                             payment.setStatus(PaymentStatus.DUPLICATE.getCode());
-                            paymentEntityRepository.save(payment);
+                            paymentService.savePayment(payment);
                         }
                     }
                 }
