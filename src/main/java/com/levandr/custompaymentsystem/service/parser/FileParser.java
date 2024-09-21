@@ -1,7 +1,9 @@
 package com.levandr.custompaymentsystem.service.parser;
 
 import com.levandr.custompaymentsystem.entity.PaymentEntity;
+import com.levandr.custompaymentsystem.entity.PaymentStatus;
 import com.levandr.custompaymentsystem.repository.PaymentEntityRepository;
+import com.levandr.custompaymentsystem.service.payment.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +27,7 @@ public class FileParser {
 
     private static final Logger log = LoggerFactory.getLogger(FileParser.class);
     private final PaymentEntityRepository paymentEntityRepository;
+    private final PaymentService paymentService;
 
     @Value("${spring.input.directory}")
     private Path INPUT_DIRECTORY;
@@ -37,29 +40,21 @@ public class FileParser {
             try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-
-                    log.info("parseFile line... {}", line);
-
-                    PaymentEntity payment = parseLine(line);
-
-                    if (payment != null && isValidLine(line)) {
-
+                    log.info("ParseFile line... {}", line);
+                    var payment = parseLine(line, filePath);
+                    if (payment != null) {
                         Optional<PaymentEntity> existingPayment = paymentEntityRepository.findByPaymentId(payment.getPaymentId());
                         if (existingPayment.isEmpty()) {
                             paymentEntityRepository.save(payment);
                         } else {
-                            log.info("Payment with ID {} already exists, skipping...", payment.toString());
+                            log.info("Payment with ID {} already exists, skipping...", payment);
+                            payment.setStatus(PaymentStatus.DUPLICATE.getCode());
+                            paymentEntityRepository.save(payment);
                         }
                     }
                 }
             }
         }
-    }
-
-    public boolean isValidLine(String line) {
-        boolean lineBool = line.length() == 143;
-        log.info("line {} isValid={}", line, lineBool);
-        return lineBool;
     }
 
     public boolean isValidFileName(Path filePath) {
@@ -77,28 +72,29 @@ public class FileParser {
     }
 
 
-    private PaymentEntity parseLine(String line) {
-        PaymentEntity payment = new PaymentEntity();
-        log.info("Payment: {}", payment.toString());
+    private PaymentEntity parseLine(String line, Path filePath) {
         if (line.length() < 144) {
             log.error("Line is too short: {} ", line.length());
             return null;
         } else {
-            log.info("Payment approved: {}", payment.toString());
-
+            log.info("Line: {}", line);
             String recordNumber = line.substring(0, 12).trim();
             String paymentId = line.substring(13, 63).trim();
             String companyName = line.substring(64, 129).trim();
             String payerInn = line.substring(130, 142).trim();
             BigDecimal amount = new BigDecimal(line.substring(143).trim());
+            String fileName = filePath.getFileName().toString();
 
-            payment.setStatus(1);
-            log.info("Parsing success, payment is: {}", payment.toString());
-            log.info("<------------------>");
-            log.info("---levandr-parser---");
-            log.info("<------------------>");
+            log.info("Parsing success");
 
-            return new PaymentEntity(recordNumber, paymentId, companyName, payerInn, amount);
+            log.info("Record number: {}", recordNumber);
+            log.info("PaymentId: {}", paymentId);
+            log.info("CompanyName: {}", companyName);
+            log.info("PayerInn: {}", payerInn);
+            log.info("Amount: {}", amount);
+            log.info("File name: {}", fileName);
+
+            return paymentService.createPayment(recordNumber, paymentId, companyName, payerInn, amount, PaymentStatus.OK.getCode(), fileName);
         }
     }
 }

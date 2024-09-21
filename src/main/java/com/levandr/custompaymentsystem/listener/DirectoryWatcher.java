@@ -39,7 +39,7 @@ public class DirectoryWatcher {
                 if (Files.isRegularFile(entry)) {
                     synchronized (processedFiles) {
                         if (!processedFiles.contains(entry)) {
-                            System.out.println("Processing existing file: " + entry);
+                            log.info("Processing existing file: {} ", entry);
                             fileParser.parseFile(entry);
                             processedFiles.add(entry);
                         }
@@ -75,7 +75,6 @@ public class DirectoryWatcher {
                         log.info("New file detected: {}", filePath);
                         synchronized (processedFiles) {
                             if (!processedFiles.contains(filePath)) {
-                                log.info("File created: {}", filePath);
                                 fileParser.parseFile(filePath);
                                 processedFiles.add(filePath);
                             }

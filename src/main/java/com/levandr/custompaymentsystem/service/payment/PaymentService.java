@@ -27,9 +27,10 @@ public class PaymentService {
 
     public PaymentEntity createPayment(String recordNumber, String paymentId,
                                        String companyName, String payerINN,
-                                       BigDecimal amount, Integer status){
+                                       BigDecimal amount, Integer status,
+                                       String file_name){
 
-        PaymentEntity paymentEntity = new PaymentEntity(recordNumber, paymentId, companyName, payerINN, amount);
+        PaymentEntity paymentEntity = new PaymentEntity(recordNumber, paymentId, companyName, payerINN, amount, file_name);
         paymentEntity.setStatus(status);
 
         return paymentEntityRepository.save(paymentEntity);
