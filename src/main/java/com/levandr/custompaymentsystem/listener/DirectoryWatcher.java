@@ -24,9 +24,8 @@ public class DirectoryWatcher {
     private final FileParser fileParser;
     private final Set<Path> processedFiles = new HashSet<>();
 
-    @PostConstruct
     public void init() {
-        log.info("Input directory: {} ", INPUT_DIRECTORY);
+        log.info("INIT Input directory: {} ", INPUT_DIRECTORY);
         processExistingFiles();
         watchDirectory();
     }

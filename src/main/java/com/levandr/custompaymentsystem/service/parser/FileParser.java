@@ -32,28 +32,35 @@ public class FileParser {
 
     @Transactional
     public void parseFile(Path filePath) throws IOException {
-        log.info("parseFile start... {}", filePath);
+        log.info("Parsing file: {}", filePath);
+
         if (filePath.startsWith(INPUT_DIRECTORY) && isValidFileName(filePath)) {
             try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    log.info("ParseFile line... {}", line);
-                    var payment = parseLine(line, filePath);
+                    log.info("Parsing line: {}", line);
+                    Payment payment = parseLine(line, filePath);
                     if (payment != null) {
                         Optional<Payment> existingPayment = paymentService.findPaymentByPaymentId(payment.getPaymentId());
                         if (existingPayment.isEmpty()) {
                             payment.setStatusCode(PaymentStatus.OK.getCode());
                             paymentService.savePayment(payment);
+                            log.info("Payment saved: {}", payment);
                         } else {
-                            log.info("Payment with ID {} already exists, skipping...", payment);
                             payment.setStatusCode(PaymentStatus.DUPLICATE.getCode());
-                            paymentService.savePayment(payment);
+                            log.info("Payment with ID {} already exists, status set to DUPLICATE", payment.getPaymentId());
                         }
                     }
                 }
+            } catch (IOException e) {
+                log.error("Error reading file: {}", e.getMessage());
+//                throw new RuntimeException("File processing failed", e);
             }
+        } else {
+            log.warn("Invalid file path or name: {}", filePath);
         }
     }
+
 
     public boolean isValidFileName(Path filePath) {
         String fileName = filePath.getFileName().toString();
@@ -70,8 +77,12 @@ public class FileParser {
     }
 
     private Payment parseLine(String line, Path filePath) {
-        if (line.length() < 144) {
+        if (line.length() < 154) {
             log.error("Line is too short: {} ", line.length());
+            return null;
+        }
+        if (line.length() > 156) {
+            log.error("Line is to long: {} ", line.length());
             return null;
         } else {
             log.info("Line: {}", line);
