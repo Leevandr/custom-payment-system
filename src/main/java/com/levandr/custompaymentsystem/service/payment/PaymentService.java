@@ -1,6 +1,6 @@
 package com.levandr.custompaymentsystem.service.payment;
 
-import com.levandr.custompaymentsystem.entity.PaymentEntity;
+import com.levandr.custompaymentsystem.entity.Payment;
 import com.levandr.custompaymentsystem.repository.PaymentEntityRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,26 +13,26 @@ import java.util.Optional;
 public class PaymentService {
     private final PaymentEntityRepository paymentEntityRepository;
 
-    public void savePayment(PaymentEntity paymentEntity) {
-        paymentEntityRepository.save(paymentEntity);
+    public void savePayment(Payment payment) {
+        paymentEntityRepository.save(payment);
     }
 
-    public Optional<PaymentEntity> findPaymentId(Long id) {
+    public Optional<Payment> findPaymentId(Long id) {
         return paymentEntityRepository.findById(id);
     }
 
-    public Optional<PaymentEntity> findPaymentByPaymentId(String paymentId) {
+    public Optional<Payment> findPaymentByPaymentId(String paymentId) {
         return paymentEntityRepository.findByPaymentId(paymentId);
     }
 
-    public PaymentEntity createPayment(String recordNumber, String paymentId,
-                                       String companyName, String payerINN,
-                                       BigDecimal amount, Integer status,
-                                       String file_name){
+    public Payment createPayment(String recordNumber, String paymentId,
+                                 String companyName, String payerINN,
+                                 BigDecimal amount, Integer status,
+                                 String file_name){
 
-        PaymentEntity paymentEntity = new PaymentEntity(recordNumber, paymentId, companyName, payerINN, amount, file_name);
-        paymentEntity.setStatus(status);
+        Payment payment = new Payment(recordNumber, paymentId, companyName, payerINN, amount, file_name);
+        payment.setStatusCode(status);
 
-        return paymentEntityRepository.save(paymentEntity);
+        return paymentEntityRepository.save(payment);
     }
 }

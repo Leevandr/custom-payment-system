@@ -1,4 +1,4 @@
-package com.levandr.custompaymentsystem.entity;
+package com.levandr.custompaymentsystem.enums;
 
 import lombok.Getter;
 

@@ -1,7 +1,7 @@
 package com.levandr.custompaymentsystem;
 
-import com.levandr.custompaymentsystem.entity.PaymentEntity;
-import com.levandr.custompaymentsystem.entity.PaymentStatus;
+import com.levandr.custompaymentsystem.entity.Payment;
+import com.levandr.custompaymentsystem.enums.PaymentStatus;
 import com.levandr.custompaymentsystem.repository.PaymentEntityRepository;
 import com.levandr.custompaymentsystem.service.payment.PaymentService;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ public class PaymentServiceIntegrationTest {
 
     @Test
     public void testCreateAndFindPayment() {
-        PaymentEntity paymentEntity = paymentService.createPayment(
+        Payment payment = paymentService.createPayment(
                 "000001000001",
                 "123456789-123456789-123456789-123356789-1234567890",
                 "Наименование",
@@ -37,12 +37,12 @@ public class PaymentServiceIntegrationTest {
                 "test_file"
         );
 
-        assertThat(paymentEntity.getId()).isNotNull();
+        assertThat(payment.getId()).isNotNull();
 
-        Optional<PaymentEntity> foundPayment = paymentService.findPaymentByPaymentId(paymentEntity.getPaymentId());
+        Optional<Payment> foundPayment = paymentService.findPaymentByPaymentId(payment.getPaymentId());
 
         assertThat(foundPayment).isPresent();
-        assertThat(foundPayment.get().getPaymentId()).isEqualTo(paymentEntity.getPaymentId());
+        assertThat(foundPayment.get().getPaymentId()).isEqualTo(payment.getPaymentId());
 
     }
 }

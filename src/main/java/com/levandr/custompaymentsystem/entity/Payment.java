@@ -5,8 +5,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.proxy.HibernateProxy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.util.Objects;
@@ -16,9 +14,8 @@ import java.util.Objects;
 @Entity
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "ref_payment")
-public class PaymentEntity {
+public class Payment {
 
-    private static final Logger log = LoggerFactory.getLogger(PaymentEntity.class);
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false)
@@ -40,25 +37,21 @@ public class PaymentEntity {
     BigDecimal amount;
 
     @Column(name = "status_code", nullable = false)
-    Integer status;
+    Integer statusCode;
 
     @Column(name = "file_name", nullable = false)
-    String file_name;
+    String fileName;
 
-    public PaymentEntity(String recordNumber, String paymentId, String companyName, String payerInn, BigDecimal amount, String file_name) {
+    public Payment(String recordNumber, String paymentId, String companyName, String payerInn, BigDecimal amount, String fileName) {
         this.recordNumber = recordNumber;
         this.paymentId = paymentId;
         this.companyName = companyName;
         this.payerInn = payerInn;
         this.amount = amount;
-        this.file_name = file_name;
-        log.info("Payment entity is: {}", this);
-        log.info("                     ");
-        log.info("                     ");
-        log.info("                     ");
+        this.fileName = fileName;
     }
 
-    public PaymentEntity() {
+    public Payment() {
 
     }
 
@@ -71,7 +64,7 @@ public class PaymentEntity {
         Class<?> thisEffectiveClass = this instanceof HibernateProxy ?
                 ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
         if (thisEffectiveClass != oEffectiveClass) return false;
-        PaymentEntity that = (PaymentEntity) o;
+        Payment that = (Payment) o;
         return getId() != null && Objects.equals(getId(), that.getId());
     }
 
@@ -90,7 +83,7 @@ public class PaymentEntity {
                ", companyName='" + companyName + '\'' +
                ", payerInn='" + payerInn + '\'' +
                ", amount=" + amount +
-               ", status=" + status +
+               ", status=" + statusCode +
                '}';
     }
 }

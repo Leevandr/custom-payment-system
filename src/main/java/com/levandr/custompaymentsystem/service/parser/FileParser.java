@@ -1,8 +1,7 @@
 package com.levandr.custompaymentsystem.service.parser;
 
-import com.levandr.custompaymentsystem.entity.PaymentEntity;
-import com.levandr.custompaymentsystem.entity.PaymentStatus;
-import com.levandr.custompaymentsystem.repository.PaymentEntityRepository;
+import com.levandr.custompaymentsystem.entity.Payment;
+import com.levandr.custompaymentsystem.enums.PaymentStatus;
 import com.levandr.custompaymentsystem.service.payment.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -26,12 +25,10 @@ import java.util.regex.Pattern;
 public class FileParser {
 
     private static final Logger log = LoggerFactory.getLogger(FileParser.class);
-    private final PaymentEntityRepository paymentEntityRepository;
     private final PaymentService paymentService;
 
     @Value("${spring.input.directory}")
     private Path INPUT_DIRECTORY;
-
 
     @Transactional
     public void parseFile(Path filePath) throws IOException {
@@ -43,13 +40,13 @@ public class FileParser {
                     log.info("ParseFile line... {}", line);
                     var payment = parseLine(line, filePath);
                     if (payment != null) {
-                        Optional<PaymentEntity> existingPayment = paymentService.findPaymentByPaymentId(payment.getPaymentId());
+                        Optional<Payment> existingPayment = paymentService.findPaymentByPaymentId(payment.getPaymentId());
                         if (existingPayment.isEmpty()) {
-                            payment.setStatus(PaymentStatus.OK.getCode());
+                            payment.setStatusCode(PaymentStatus.OK.getCode());
                             paymentService.savePayment(payment);
                         } else {
                             log.info("Payment with ID {} already exists, skipping...", payment);
-                            payment.setStatus(PaymentStatus.DUPLICATE.getCode());
+                            payment.setStatusCode(PaymentStatus.DUPLICATE.getCode());
                             paymentService.savePayment(payment);
                         }
                     }
@@ -72,8 +69,7 @@ public class FileParser {
         return isValid;
     }
 
-
-    private PaymentEntity parseLine(String line, Path filePath) {
+    private Payment parseLine(String line, Path filePath) {
         if (line.length() < 144) {
             log.error("Line is too short: {} ", line.length());
             return null;
@@ -87,7 +83,6 @@ public class FileParser {
             String fileName = filePath.getFileName().toString();
 
             log.info("Parsing success");
-
             log.info("Record number: {}", recordNumber);
             log.info("PaymentId: {}", paymentId);
             log.info("CompanyName: {}", companyName);
