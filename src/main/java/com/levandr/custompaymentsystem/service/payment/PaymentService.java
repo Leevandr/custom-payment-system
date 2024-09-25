@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -25,14 +26,16 @@ public class PaymentService {
         return paymentEntityRepository.findByPaymentId(paymentId);
     }
 
-    public Payment createPayment(String recordNumber, String paymentId,
-                                 String companyName, String payerINN,
+    public Payment createPayment(String paymentId, String recordNumber,
+                                 String companyName, String payerInn,
                                  BigDecimal amount, Integer status,
-                                 String file_name){
+                                 String fileName) {
 
-        Payment payment = new Payment(recordNumber, paymentId, companyName, payerINN, amount, file_name);
-        payment.setStatusCode(status);
-
+        Payment payment = new Payment(null, paymentId, recordNumber, companyName, payerInn, amount, status, fileName);
         return paymentEntityRepository.save(payment);
+    }
+
+    public void saveAll(List<Payment> payments) {
+        paymentEntityRepository.saveAll(payments);
     }
 }

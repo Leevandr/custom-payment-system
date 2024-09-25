@@ -1,7 +1,7 @@
 package com.levandr.custompaymentsystem.listener;
 
-import com.levandr.custompaymentsystem.service.parser.FileParser;
-import jakarta.annotation.PostConstruct;
+import com.levandr.custompaymentsystem.exception.FileProcessingException;
+import com.levandr.custompaymentsystem.service.parser.ParserService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +21,7 @@ public class DirectoryWatcher {
     private static final Logger log = LoggerFactory.getLogger(DirectoryWatcher.class);
     @Value("${spring.input.directory}")
     private Path INPUT_DIRECTORY;
-    private final FileParser fileParser;
+    private final ParserService parserService;
     private final Set<Path> processedFiles = new HashSet<>();
 
     public void init() {
@@ -39,14 +39,14 @@ public class DirectoryWatcher {
                     synchronized (processedFiles) {
                         if (!processedFiles.contains(entry)) {
                             log.info("Processing existing file: {} ", entry);
-                            fileParser.parseFile(entry);
+                            parserService.parseFile(entry);
                             processedFiles.add(entry);
                         }
                     }
                 }
             }
-        } catch (IOException e) {
-            log.error("IO exception in processExcFile ", e);
+        } catch (IOException | FileProcessingException e) {
+            throw new RuntimeException("Failed to access directory: " + INPUT_DIRECTORY, e);
         }
     }
 
@@ -73,7 +73,7 @@ public class DirectoryWatcher {
                         log.info("New file detected: {}", filePath);
                         synchronized (processedFiles) {
                             if (!processedFiles.contains(filePath)) {
-                                fileParser.parseFile(filePath);
+                                parserService.parseFile(filePath);
                                 processedFiles.add(filePath);
                             }
                         }
@@ -81,8 +81,9 @@ public class DirectoryWatcher {
                 }
                 key.reset();
             }
-        } catch (IOException exception) {
-            log.error("Error watching directory ", exception);
+        } catch (IOException | FileProcessingException e) {
+            log.error("Error while setting up the directory watcher: {}", e.getMessage());
+            throw new RuntimeException("Failed to set up directory watcher for: " + INPUT_DIRECTORY, e);
         }
     }
 }

@@ -12,14 +12,16 @@ import java.util.Objects;
 @Getter
 @Setter
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "ref_payment")
+@Table(name = "payment")
 public class Payment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false)
-    private Long id;
+    Long id;
 
     @Column(name = "payment_id", nullable = false)
     String paymentId;
@@ -41,19 +43,6 @@ public class Payment {
 
     @Column(name = "file_name", nullable = false)
     String fileName;
-
-    public Payment(String recordNumber, String paymentId, String companyName, String payerInn, BigDecimal amount, String fileName) {
-        this.recordNumber = recordNumber;
-        this.paymentId = paymentId;
-        this.companyName = companyName;
-        this.payerInn = payerInn;
-        this.amount = amount;
-        this.fileName = fileName;
-    }
-
-    public Payment() {
-
-    }
 
     @Override
     public final boolean equals(Object o) {
