@@ -17,9 +17,9 @@ public class ReporterService {
 
     private static final Logger log = LoggerFactory.getLogger(ReporterService.class);
     @Value("${spring.output.error}")
-    private Path REPORT_ERROR_DIR;
+    private Path reportErrorDir;
     @Value("${spring.output.success}")
-    private Path REPORT_SUCCESS_DIR;
+    private Path reportSuccessDir;
 
 
     public void createReport(List<Payment> payments, String fileName) {
@@ -32,9 +32,9 @@ public class ReporterService {
         Path outputPath;
         if (payments.stream().allMatch(payment ->
                 payment.getStatusCode().equals(PaymentStatus.FULL_SAVED.getCode()))) {
-            outputPath = REPORT_SUCCESS_DIR.resolve("Report " + fileName);
+            outputPath = reportSuccessDir.resolve("Report " + fileName);
         } else {
-            outputPath = REPORT_ERROR_DIR.resolve("Report " + fileName);
+            outputPath = reportErrorDir.resolve("Report " + fileName);
         }
         try {
             Files.createDirectories(outputPath.getParent());

@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
@@ -33,118 +32,134 @@ public class ParserService {
     private final ReporterService reporterService;
 
     @Value("${spring.input.directory}")
-    private Path INPUT_DIRECTORY;
+    private Path inputDirectory;
 
-    public void parseFile(Path filePath) throws IOException, FileProcessingException {
+    public void parseFile(Path filePath) throws FileProcessingException {
         log.info("Parsing file: {}", filePath);
 
-        List<Payment> payments = new ArrayList<>();
-        boolean hasInvalidLines = false;
-        boolean hasDuplicate = false;
-        Set<String> paymentIds = new HashSet<>();
-
-
-        if (filePath.startsWith(INPUT_DIRECTORY) && isValidFileName(filePath)) {
-            try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    log.info("Parsing line: {}", line);
-                    Payment payment = parseLine(line, filePath);
-                    if (payment != null) {
-                        log.info("Checking if payment with ID {} exists", payment.getPaymentId());
-
-                        if (paymentIds.contains(payment.getPaymentId())) {
-                            payment.setStatusCode(PaymentStatus.DUPLICATE.getCode());
-                            hasDuplicate = true;
-                            log.info("Payment with ID {} is a duplicate in the current file, status set to DUPLICATE", payment.getPaymentId());
-                        } else {
-                            paymentIds.add(payment.getPaymentId());
-                            payment.setStatusCode(PaymentStatus.OK.getCode());
-                        }
-
-                        payments.add(payment);
-                    } else {
-                        hasInvalidLines = true;
-                    }
-                }
-                if (!payments.isEmpty()) {
-                    if (hasInvalidLines || hasDuplicate) {
-                        payments.stream()
-                                .filter(payment -> payment.getStatusCode() == PaymentStatus.OK.getCode())
-                                .forEach(payment -> payment.setStatusCode(PaymentStatus.PARTIAL_OK.getCode()));
-                    } else {
-                        payments.forEach(payment -> payment.setStatusCode(PaymentStatus.FULL_SAVED.getCode()));
-                    }
-                    paymentService.saveAll(payments);
-                    reporterService.createReport(payments, filePath.getFileName().toString());
-                } else {
-                    log.warn("No valid payments to save or report");
-                }
-            } catch (IOException e) {
-                log.error("Error reading file: {}", e.getMessage());
-                throw new FileProcessingException("File processing failed", e);
-            }
-        } else {
+        if (!isValidFilePath(filePath)) {
             log.warn("Invalid file path or name: {}", filePath);
+            return;
         }
+
+        try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
+            List<Payment> payments = new ArrayList<>();
+            Set<String> paymentIds = new HashSet<>();
+
+            boolean hasInvalidLines = processFile(reader, payments, paymentIds);
+
+            if (payments.isEmpty()) {
+                log.warn("No valid payments to save or report");
+                return;
+            }
+
+            updatePaymentStatuses(payments, hasInvalidLines);
+            saveAndReport(payments, filePath.getFileName().toString());
+
+        } catch (IOException e) {
+            log.error("Error reading file: {}", e.getMessage());
+            throw new FileProcessingException("File processing failed", e);
+        }
+    }
+
+    private boolean isValidFilePath(Path filePath) {
+        return filePath.startsWith(inputDirectory) && isValidFileName(filePath);
     }
 
     public boolean isValidFileName(Path filePath) {
         String fileName = filePath.getFileName().toString();
         String regex = "^BCP_\\d{8}_\\d{6}_\\d{4}";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(fileName);
-        boolean isValid = matcher.matches();
-        if (!isValid) {
-            log.warn("File name: {} is Invalid", fileName);
-        } else {
-            log.warn("File name: {} is Valid!", fileName);
-        }
+        boolean isValid = Pattern.matches(regex, fileName);
+
+        log.info("File name: {} is {}", fileName, isValid ? "valid" : "invalid");
         return isValid;
     }
 
-    private Payment parseLine(String line, Path filePath) {
+    private boolean processFile(BufferedReader reader, List<Payment> payments, Set<String> paymentIds) throws IOException {
+        String line;
+        boolean hasInvalidLines = false;
 
+        while ((line = reader.readLine()) != null) {
+            log.info("Parsing line: {}", line);
+            Payment payment = parseLine(line);
 
-        String regex = "^\\d{12} \\d{9}-\\d{9}-\\d{9}-\\d{9}-\\d{9,10} .{0,65} + \\d{12} \\d{1,19}\\.\\d{2}$";
+            if (payment == null) {
+                hasInvalidLines = true;
+                continue;
+            }
 
-        line = line.replace("\uFEFF", "").trim();
-        int trimmedLength = line.length();
+            if (isDuplicate(payment, paymentIds)) {
+                markAsDuplicate(payment);
+            } else {
+                paymentIds.add(payment.getPaymentId());
+                markAsValid(payment);
+            }
 
-        if (trimmedLength < 154 || trimmedLength > 156) {
-            log.error("Line length is invalid: {}", trimmedLength);
-            return null;
+            payments.add(payment);
         }
-        if (!line.matches(regex)) {
-            log.error("Line does not match the required format: {}", line);
+        return hasInvalidLines;
+    }
+
+    private boolean isDuplicate(Payment payment, Set<String> paymentIds) {
+        return paymentIds.contains(payment.getPaymentId());
+    }
+
+    private void markAsDuplicate(Payment payment) {
+        payment.setStatusCode(PaymentStatus.DUPLICATE.getCode());
+        log.info("Payment with ID {} is a duplicate, status set to DUPLICATE", payment.getPaymentId());
+    }
+
+    private void markAsValid(Payment payment) {
+        payment.setStatusCode(PaymentStatus.OK.getCode());
+    }
+
+    private Payment parseLine(String line) {
+        String cleanedLine = line.replace("\uFEFF", "").trim();
+
+        if (!isValidLine(cleanedLine)) {
+            log.error("Line is invalid: {}", cleanedLine);
             return null;
         }
 
         try {
-            log.info("Line: {}", line);
-            String recordNumber = line.substring(0, 12).trim();
-            String paymentId = line.substring(13, 63).trim();
-            String companyName = line.substring(64, 129).trim();
-            String payerInn = line.substring(130, 142).trim();
-            BigDecimal amount = new BigDecimal(line.substring(143).trim());
-            String fileName = filePath.getFileName().toString();
-
-            log.info("Parsing success");
-            log.info("Record number: {}", recordNumber);
-            log.info("PaymentId: {}", paymentId);
-            log.info("CompanyName: {}", companyName);
-            log.info("PayerInn: {}", payerInn);
-            log.info("Amount: {}", amount);
-            log.info("File name: {}", fileName);
-
-            return paymentService.createPayment(paymentId, recordNumber, companyName, payerInn, amount, PaymentStatus.OK.getCode(), fileName);
-        } catch (IndexOutOfBoundsException e) {
-            log.error("Error while extracting fields from line: {}", e.getMessage());
-            return null;
-        } catch (NumberFormatException e) {
-            log.error("Invalid number format in line: {}", e.getMessage());
+            return extractPayment(cleanedLine);
+        } catch (Exception e) {
+            log.error("Error parsing line: {}", e.getMessage());
             return null;
         }
     }
 
+    private boolean isValidLine(String line) {
+        String regex = "^\\d{12} \\d{9}-\\d{9}-\\d{9}-\\d{9}-\\d{9,10} .{0,65} + \\d{12} \\d{1,19}\\.\\d{2}$";
+        return line.length() >= 154 && line.length() <= 156 && line.matches(regex);
+    }
+
+    private Payment extractPayment(String line) {
+        String recordNumber = line.substring(0, 12).trim();
+        String paymentId = line.substring(13, 63).trim();
+        String companyName = line.substring(64, 129).trim();
+        String payerInn = line.substring(130, 142).trim();
+        BigDecimal amount = new BigDecimal(line.substring(143).trim());
+
+        log.info("Parsed payment - Record: {}, ID: {}, Company: {}, PayerInn: {}, Amount: {}",
+                recordNumber, paymentId, companyName, payerInn, amount);
+
+        return paymentService.createPayment(paymentId, recordNumber, companyName, payerInn, amount, PaymentStatus.OK.getCode(), "");
+    }
+
+    private void updatePaymentStatuses(List<Payment> payments, boolean hasInvalidLines) {
+        if (hasInvalidLines) {
+            payments.stream()
+                    .filter(payment -> payment.getStatusCode() == PaymentStatus.OK.getCode())
+                    .forEach(payment -> payment.setStatusCode(PaymentStatus.PARTIAL_OK.getCode()));
+        } else {
+            payments.forEach(payment -> payment.setStatusCode(PaymentStatus.FULL_SAVED.getCode()));
+        }
+    }
+
+    private void saveAndReport(List<Payment> payments, String fileName) {
+        paymentService.saveAll(payments);
+        reporterService.createReport(payments, fileName);
+    }
 }
+
