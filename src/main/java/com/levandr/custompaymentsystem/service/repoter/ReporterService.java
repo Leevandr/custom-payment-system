@@ -31,7 +31,7 @@ public class ReporterService {
         }
         Path outputPath;
         if (payments.stream().allMatch(payment ->
-                payment.getStatusCode() == PaymentStatus.FULL_SAVED.getCode())) {
+                payment.getStatusCode().equals(PaymentStatus.FULL_SAVED.getCode()))) {
             outputPath = REPORT_SUCCESS_DIR.resolve("Report " + fileName);
         } else {
             outputPath = REPORT_ERROR_DIR.resolve("Report " + fileName);
@@ -43,7 +43,5 @@ public class ReporterService {
         } catch (IOException e) {
             log.error("Report don't save {0}", e);
         }
-
-
     }
 }
