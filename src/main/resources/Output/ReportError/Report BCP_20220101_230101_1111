@@ -1,3 +1,0 @@
-PaymentEntity{id=1, paymentId='123456789-133456789-123456789-123356789-1234567890', recordNumber='000001000002', companyName='Наименование', payerInn='12345678912', amount=100.00, status=98}
-PaymentEntity{id=2, paymentId='123456789-133456789-123456789-123356789-1234568890', recordNumber='000001000002', companyName='Наименование', payerInn='12345678912', amount=100.00, status=98}
-PaymentEntity{id=3, paymentId='123456789-133456789-123456789-123356789-1234569890', recordNumber='000001000002', companyName='Наименование', payerInn='12345678912', amount=100.00, status=98}

@@ -17,10 +17,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 @Service
@@ -113,7 +110,7 @@ public class ParserService {
         payment.setStatusCode(PaymentStatus.OK.getCode());
     }
 
-    private Payment parseLine(String line) {
+    public Payment parseLine(String line) {
         String cleanedLine = line.replace("\uFEFF", "").trim();
 
         if (!isValidLine(cleanedLine)) {

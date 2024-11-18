@@ -14,18 +14,48 @@ import java.util.Optional;
 public class PaymentService {
     private final PaymentEntityRepository paymentEntityRepository;
 
-    public void savePayment(Payment payment) {
-        paymentEntityRepository.save(payment);
+    /**
+     * Сохраняет платеж и возвращает сохраненный объект.
+     *
+     * @param payment объект платежа для сохранения.
+     * @return сохраненный объект Payment.
+     */
+    public Payment savePayment(Payment payment) {
+        return paymentEntityRepository.save(payment);
     }
 
+    /**
+     * Находит платеж по уникальному идентификатору.
+     *
+     * @param id уникальный идентификатор записи.
+     * @return Optional с объектом Payment, если найден.
+     */
     public Optional<Payment> findPaymentId(Long id) {
         return paymentEntityRepository.findById(id);
     }
 
+    /**
+     * Находит платеж по идентификатору платежа.
+     *
+     * @param paymentId уникальный идентификатор платежа.
+     * @return Optional с объектом Payment, если найден.
+     */
     public Optional<Payment> findPaymentByPaymentId(String paymentId) {
         return paymentEntityRepository.findByPaymentId(paymentId);
     }
 
+    /**
+     * Создает новый платеж и сохраняет его в базе данных.
+     *
+     * @param paymentId    уникальный идентификатор платежа.
+     * @param recordNumber номер записи.
+     * @param companyName  название компании.
+     * @param payerInn     ИНН плательщика.
+     * @param amount       сумма платежа.
+     * @param status       статус платежа.
+     * @param fileName     имя файла, из которого получены данные.
+     * @return сохраненный объект Payment.
+     */
     public Payment createPayment(String paymentId, String recordNumber,
                                  String companyName, String payerInn,
                                  BigDecimal amount, Integer status,
@@ -35,7 +65,12 @@ public class PaymentService {
         return paymentEntityRepository.save(payment);
     }
 
-    public void saveAll(List<Payment> payments) {
-        paymentEntityRepository.saveAll(payments);
+    /**
+     * Сохраняет список платежей.
+     *
+     * @param payments список платежей для сохранения.
+     */
+    public List<Payment> saveAll(List<Payment> payments) {
+        return paymentEntityRepository.saveAll(payments);
     }
 }
