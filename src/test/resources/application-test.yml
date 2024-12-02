@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: custom-payment-system
+  input:
+    directory: /Users/levandr/IdeaProjects/custom-payment-system/src/main/resources/Input
+  output:
+    error: /Users/levandr/IdeaProjects/custom-payment-system/src/main/resources/Output/ReportError
+    success: /Users/levandr/IdeaProjects/custom-payment-system/src/main/resources/Output/ReportSuccess

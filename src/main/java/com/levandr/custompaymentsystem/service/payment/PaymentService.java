@@ -21,6 +21,9 @@ public class PaymentService {
      * @return сохраненный объект Payment.
      */
     public Payment savePayment(Payment payment) {
+        if (payment == null) {
+            throw new IllegalArgumentException("Payment entity cannot be null");
+        }
         return paymentEntityRepository.save(payment);
     }
 
@@ -61,7 +64,8 @@ public class PaymentService {
                                  BigDecimal amount, Integer status,
                                  String fileName) {
 
-        Payment payment = new Payment(null, paymentId, recordNumber, companyName, payerInn, amount, status, fileName);
+        Payment payment = new Payment(null,
+                paymentId, recordNumber, companyName, payerInn, amount, status, fileName);
         return paymentEntityRepository.save(payment);
     }
 

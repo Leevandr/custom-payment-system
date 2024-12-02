@@ -23,23 +23,23 @@ import java.util.concurrent.TimeUnit;
 public class DirectoryWatcher {
 
     private static final Logger log = LoggerFactory.getLogger(DirectoryWatcher.class);
-    private final ExecutorService executorService = Executors.newFixedThreadPool(5);
+    final ExecutorService executorService = Executors.newFixedThreadPool(5);
 
     @Value("${spring.input.directory}")
     private Path inputDirectory;
 
     private final ParserService parserService;
-    private final Set<Path> processedFiles = new HashSet<>();
+    final Set<Path> processedFiles = new HashSet<>();
 
     @PostConstruct
     public void init() {
-        log.info("Initializing directory watcher for: {}", inputDirectory);
+        log.info("Инициализация наблюдателя каталогов для: {}", inputDirectory);
         processExistingFiles();
         startDirectoryWatch();
     }
 
     public void processExistingFiles() {
-        log.info("Processing existing files...");
+        log.info("Обработка существующих файлов...");
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(inputDirectory)) {
             for (Path entry : stream) {
                 if (Files.isRegularFile(entry)) {
@@ -47,24 +47,24 @@ public class DirectoryWatcher {
                 }
             }
         } catch (IOException e) {
-            log.error("Failed to access directory: {}", inputDirectory, e);
+            log.error("Не удалось получить доступ к каталогу: {}", inputDirectory, e);
         }
     }
 
     public void startDirectoryWatch() {
-        log.info("Starting to watch directory...");
+        log.info("Начинаю смотреть каталог...");
         try (WatchService watchService = FileSystems.getDefault().newWatchService()) {
             inputDirectory.register(watchService, StandardWatchEventKinds.ENTRY_CREATE);
-            log.info("Directory watcher registered for: {}", inputDirectory);
+            log.info("Наблюдатель каталогов зарегистрирован для: {}", inputDirectory);
 
             executorService.submit(() -> {
                 while (!Thread.currentThread().isInterrupted()) {
                     WatchKey key;
                     try {
-                        key = watchService.poll(10, TimeUnit.SECONDS);  // Периодическое ожидание событий
+                        key = watchService.poll(1, TimeUnit.SECONDS);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
-                        log.warn("WatchService interrupted", e);
+                        log.warn("Служба наблюдения прервана", e);
                         break;
                     }
 
@@ -73,7 +73,7 @@ public class DirectoryWatcher {
                             WatchEvent.Kind<?> kind = event.kind();
                             if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
                                 Path filePath = inputDirectory.resolve((Path) event.context());
-                                log.info("New file detected: {}", filePath);
+                                log.info("Обнаружен новый файл: {}", filePath);
                                 processFileAsync(filePath);
                             }
                         }
@@ -82,21 +82,21 @@ public class DirectoryWatcher {
                 }
             });
         } catch (IOException e) {
-            log.error("Failed to set up directory watcher: {}", e.getMessage());
-            throw new RuntimeException("Failed to set up directory watcher for: " + inputDirectory, e);
+            log.error("Не удалось настроить наблюдатель каталогов.: {}", e.getMessage());
+            throw new RuntimeException("Не удалось настроить наблюдатель каталогов для: " + inputDirectory, e);
         }
     }
 
-    private void processFileAsync(Path filePath) {
+    void processFileAsync(Path filePath) {
         synchronized (processedFiles) {
             if (!processedFiles.contains(filePath)) {
                 executorService.submit(() -> {
                     try {
-                        log.info("Processing file: {}", filePath);
+                        log.info("Обработка файла: {}", filePath);
                         parserService.parseFile(filePath);
                         processedFiles.add(filePath);
                     } catch (FileProcessingException e) {
-                        log.error("Error processing file: {}", filePath, e);
+                        log.error("Ошибка обработки файла: {}", filePath, e);
                     }
                 });
             }
@@ -105,15 +105,15 @@ public class DirectoryWatcher {
 
     @PreDestroy
     public void shutdown() {
-        log.info("Shutting down directory watcher...");
+        log.info("Выключение наблюдателя каталогов...");
         try {
             executorService.shutdown();
             if (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
-                log.warn("Forcing shutdown of executor service.");
+                log.warn("Принудительное завершение службы исполнителя.");
                 executorService.shutdownNow();
             }
         } catch (InterruptedException e) {
-            log.error("Error during shutdown: ", e);
+            log.error("Ошибка во время выключения: ", e);
             executorService.shutdownNow();
         }
     }

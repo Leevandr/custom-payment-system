@@ -32,10 +32,10 @@ public class ParserService {
     private Path inputDirectory;
 
     public void parseFile(Path filePath) throws FileProcessingException {
-        log.info("Parsing file: {}", filePath);
+        log.info("Разбор файла: {}", filePath);
 
         if (!isValidFilePath(filePath)) {
-            log.warn("Invalid file path or name: {}", filePath);
+            log.warn("Неверный путь или имя файла: {}", filePath);
             return;
         }
 
@@ -46,7 +46,7 @@ public class ParserService {
             boolean hasInvalidLines = processFile(reader, payments, paymentIds);
 
             if (payments.isEmpty()) {
-                log.warn("No valid payments to save or report");
+                log.warn("Нет действительных платежей для сохранения или отчета.");
                 return;
             }
 
@@ -54,8 +54,8 @@ public class ParserService {
             saveAndReport(payments, filePath.getFileName().toString());
 
         } catch (IOException e) {
-            log.error("Error reading file: {}", e.getMessage());
-            throw new FileProcessingException("File processing failed", e);
+            log.error("Ошибка чтения файла: {}", e.getMessage());
+            throw new FileProcessingException("Обработка файла не удалась", e);
         }
     }
 
@@ -68,7 +68,7 @@ public class ParserService {
         String regex = "^BCP_\\d{8}_\\d{6}_\\d{4}";
         boolean isValid = Pattern.matches(regex, fileName);
 
-        log.info("File name: {} is {}", fileName, isValid ? "valid" : "invalid");
+        log.info("Имя файла: {} is {}", fileName, isValid ? "valid" : "invalid");
         return isValid;
     }
 
@@ -103,7 +103,7 @@ public class ParserService {
 
     private void markAsDuplicate(Payment payment) {
         payment.setStatusCode(PaymentStatus.DUPLICATE.getCode());
-        log.info("Payment with ID {} is a duplicate, status set to DUPLICATE", payment.getPaymentId());
+        log.info("Платеж с идентификатором {} является дубликатом, статус установлен на DUPLICATE.", payment.getPaymentId());
     }
 
     private void markAsValid(Payment payment) {
@@ -114,14 +114,14 @@ public class ParserService {
         String cleanedLine = line.replace("\uFEFF", "").trim();
 
         if (!isValidLine(cleanedLine)) {
-            log.error("Line is invalid: {}", cleanedLine);
+            log.error("Строка недействительна: {}", cleanedLine);
             return null;
         }
 
         try {
             return extractPayment(cleanedLine);
         } catch (Exception e) {
-            log.error("Error parsing line: {}", e.getMessage());
+            log.error("Ошибка разбора строки: {}", e.getMessage());
             return null;
         }
     }

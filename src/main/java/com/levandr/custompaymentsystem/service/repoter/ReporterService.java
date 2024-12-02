@@ -23,7 +23,7 @@ public class ReporterService {
 
 
     public void createReport(List<Payment> payments, String fileName) {
-        log.info("CreateReport is Starting...");
+        log.info("CreateReport запускается...");
 
         StringBuilder reportContent = new StringBuilder();
         for (Payment payment : payments) {
@@ -39,9 +39,9 @@ public class ReporterService {
         try {
             Files.createDirectories(outputPath.getParent());
             Files.writeString(outputPath, reportContent.toString());
-            log.info("Report is saved!");
+            log.info("Отчет сохранен.!");
         } catch (IOException e) {
-            log.error("Report don't save {0}", e);
+            log.error("Отчет не сохранять {0}", e);
         }
     }
 }
