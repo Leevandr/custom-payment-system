@@ -68,10 +68,8 @@ class PaymentServiceTest {
 
         when(paymentEntityRepository.findById(paymentId)).thenReturn(Optional.of(payment));
 
-        // Вызов метода сервиса
         Optional<Payment> result = paymentService.findPaymentId(paymentId);
 
-        // Проверка, что результат присутствует и id соответствует ожидаемому
         assertTrue(result.isPresent());
         assertEquals(paymentId, result.get().getId());
     }
@@ -88,14 +86,12 @@ class PaymentServiceTest {
     }
     @Test
     void testSavePaymentWithNull() {
-        // Проверка, что при попытке сохранения null будет выброшено исключение
         assertThrows(IllegalArgumentException.class, () -> paymentService.savePayment(null));
     }
     @Test
     void testSavePaymentWithInvalidData() {
         Payment invalidPayment = new Payment(null, null, null, null, null, null, null, null);
 
-        // Мокаем поведение репозитория, чтобы исключение не выбрасывалось
         when(paymentEntityRepository.save(any(Payment.class))).thenThrow(new IllegalArgumentException("Invalid payment data"));
 
         assertThrows(IllegalArgumentException.class, () -> paymentService.savePayment(invalidPayment));
@@ -117,21 +113,15 @@ class PaymentServiceTest {
 
     @Test
     void testSaveManyPayments() {
-        // Подготовка большого числа платежей
         List<Payment> payments = new ArrayList<>();
         for (int i = 0; i < 1000; i++) {
             payments.add(new Payment((long) i, "payment" + i, "record" + i, "Company" + i, "123456789", new BigDecimal("100.00"), 1, "file" + i + ".txt"));
         }
 
-        // Мокаем репозиторий
         when(paymentEntityRepository.saveAll(payments)).thenReturn(payments);
 
-        // Вызов метода сохранения большого количества платежей
         List<Payment> savedPayments = paymentService.saveAll(payments);
 
-        // Проверка, что все платежи сохранены
         assertEquals(1000, savedPayments.size());
     }
-
-
 }
